@@ -2,7 +2,43 @@
 
 This record summarizes AI-assisted analysis and documentation visible in the available project conversation. It distinguishes user instructions, AI contributions, and implementation evidence. A source file or validation result establishes that an artifact exists; by itself it does not establish who originally wrote the code, curated a dataset, or ran a script.
 
-Quoted excerpts below are from user messages available in the project conversation. They are not reconstructed dialogue. Where no exact relevant excerpt is available, that is stated. The [shared ChatGPT conversation](https://chatgpt.com/share/6b043c52-003c-83ee-8144-52b547c43714) is a reference to the project discussion, not a complete transcript export; the complete ChatGPT data export has been requested and is pending.
+Quoted excerpts below are from user messages available in the project conversation. They are not reconstructed dialogue. Where no exact relevant excerpt is available, that is stated.
+
+## Full AI Conversation History
+
+The public share link is provided as the full AI collaboration history for this project, beginning with the initial project prompt: [ChatGPT conversation](https://chatgpt.com/share/6b043c52-003c-83ee-8144-52b547c43714).
+
+## Selected AI Chat Excerpts
+
+Direct AI quotations below use the exact wording supplied for these exchanges. User actions and decisions are labeled separately as summaries. Numerical outcomes are cross-checked against the saved score CSV where noted.
+
+### 1. Threshold comparison
+
+- **Direct AI quotation:**
+
+  > "Don't change the production threshold or matcher yet. We'll first evaluate whether a confidence margin improves rejection without harming the 49 correct known-person predictions."
+
+- **User decision/action — summary:** You shared threshold results spanning `0.30` to `0.60`, then retained the existing `0.363` production threshold.
+- **Measured outcome:** At `0.363`, the recorded samples yield 49/50 known identities correct (98%) and 19/20 unknown identities rejected (95%). Re-scoring the saved per-image scores at `0.44` yields 48/50 known correct (96%) and 20/20 unknown rejected (100%). The `0.44` figures are post-hoc re-scoring, not a new inference run ([`outputs/confidence_margin_scores.csv`](outputs/confidence_margin_scores.csv); [`RESEARCH.md`](RESEARCH.md#62-post-hoc-threshold-re-scoring-not-a-new-experiment)).
+
+### 2. False identification and confidence-margin investigation
+
+- **Direct AI quotation:**
+
+  > "The algorithm has no second-level verification. It does not currently consider the difference between the best and second-best matching identities."
+
+- **AI suggestion — summary, not a direct quotation:** Inspect the two highest identity scores and try a confidence-margin diagnostic.
+- **User decision/action — summary:** You ran the suggested diagnostic in [`tests/test_confidence_margin.py`](tests/test_confidence_margin.py).
+- **Measured outcome:** [`outputs/confidence_margin_scores.csv`](outputs/confidence_margin_scores.csv) records `Alvaro_Silva_Calderon` falsely identified as `Albert_Costa` at `0.436156`. The lowest correctly accepted known sample was `Adam_Scott` at `0.372839` (margin `0.048469`).
+
+### 3. Avoiding an unverified threshold change
+
+- **Direct AI quotation:**
+
+  > "A threshold of 0.45 would reject the false identification, but it would also reject Adam Scott and Alejandro Avila."
+
+- **User decision/action — summary:** You retained the existing matcher and `0.363` threshold instead of applying an unverified change.
+- **Measured outcome and evidence check:** The saved results support that `0.45` would reject the unknown false match (`0.436156`) and reject `Adam_Scott` (`0.372839`). However, `Alejandro_Avila` has a recorded best similarity of `0.463468` in [`outputs/50_person_validation_results.csv`](outputs/50_person_validation_results.csv), so the current matcher rule `best_score >= threshold` would accept this sample at `0.45`. Thus, the direct AI quotation's statement about Alejandro Avila conflicts with the recorded score and implementation. The production threshold remains `0.363` in [`app.py`](app.py#L31) and [`src/face_matcher.py`](src/face_matcher.py#L8-L20).
 
 ## 1. Choosing an entirely offline architecture
 
@@ -136,4 +172,4 @@ The scripts and CSV files were inspected in the collaboration, and their reporte
 - Validation setup: [`tests/complete_50_references.py`](tests/complete_50_references.py), [`tests/test_50_person_validation.py`](tests/test_50_person_validation.py), [`tests/test_20_unknown_validation.py`](tests/test_20_unknown_validation.py), [`tests/test_confidence_margin.py`](tests/test_confidence_margin.py).
 - Measured outputs: [`outputs/50_person_validation_results.csv`](outputs/50_person_validation_results.csv), [`outputs/20_unknown_validation_results.csv`](outputs/20_unknown_validation_results.csv), [`outputs/confidence_margin_scores.csv`](outputs/confidence_margin_scores.csv).
 - Architecture and model attribution: [`ARCHITECTURE.md`](ARCHITECTURE.md), [`MODEL_LICENSES.md`](MODEL_LICENSES.md), and the [Archify project artifacts](.archify/architecture-who-is-in-the-photo-20261123-1743/).
-- Conversation evidence: [shared ChatGPT project conversation](https://chatgpt.com/share/6b043c52-003c-83ee-8144-52b547c43714). This shared link is not a complete exported transcript; the requested data export is pending. No separate transcript or AI decision log is stored in the repository.
+- Conversation evidence: [full public ChatGPT project conversation](https://chatgpt.com/share/6b043c52-003c-83ee-8144-52b547c43714).
