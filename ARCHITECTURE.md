@@ -22,6 +22,14 @@ The app describes photographs and embeddings as locally processed and says no on
 
 `ReferenceDatabase.load()` can read an existing `.npz` file, but `app.py` does not call it. The current UI therefore builds the in-memory reference set from the selected photos for its recognition flow; the diagram does not imply that the saved file is loaded automatically.
 
+## Architecture Trade-offs
+
+- **Local YuNet and SFace ONNX inference.** The app loads both model files from local `models/` paths and processes photos without online recognition APIs. This supports offline operation and keeps photos and embeddings on the local machine. It relies on the user's local compute and requires model files to be present and managed manually; the app does not download or update them. This fits the project's offline and privacy requirements.
+- **Streamlit interface.** The app uses Streamlit forms, upload controls, a threshold slider, and result components for a quick, straightforward workflow. This avoids building a separate frontend, but gives less control over custom interaction and layout than a dedicated frontend would. The implementation favors a simple interface for this project.
+- **In-memory reference embeddings.** Enrolled embeddings are stored in `st.session_state` and used directly by `FaceMatcher`, avoiding a database service and keeping the current session's workflow simple. The trade-off is that this in-memory set is not automatically restored in a new app session; users must rebuild it from the reference folder. The app keeps enrollment and recognition together in the active session.
+- **Cosine-similarity threshold.** `FaceMatcher` compares normalized embeddings and returns the highest-scoring identity when its score meets the threshold, otherwise `Unknown`. This makes the rejection rule explicit and adjustable, but one cutoff can still falsely accept an unknown person or reject a known one. The app uses `0.363` as its initial threshold and advises validation on representative data; the repository does not establish that this value is universally optimal.
+- **Local NumPy `.npz` saving.** `ReferenceDatabase.save()` writes names and embeddings to a compressed local file, providing lightweight persistence without a database server. The UI offers this as an explicit save action, but it does not automatically load the archive on startup; users give up automatic restoration and must enroll from the folder again in a new session. This keeps storage simple while the app's current workflow builds its active reference set during the session.
+
 ## Source map
 
 - [Streamlit UI, model setup, enrollment, upload, and results](app.py)
