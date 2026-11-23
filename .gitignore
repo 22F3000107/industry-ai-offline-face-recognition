@@ -28,3 +28,14 @@ env/
 *.key
 *.p12
 *.pfx
+
+# Archify local tooling and temporary review artifacts
+.agents/
+skills-lock.json
+.archify/**/browser-retry-*/
+.archify/**/review-*/
+.archify/**/*.browser-check.json
+.archify/**/*.delivery.json
+.archify/**/*.finalize.json
+.archify/**/*.finalize-summary.json
+.archify/**/*.visual-check.json
