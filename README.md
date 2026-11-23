@@ -1,17 +1,17 @@
 # 👤 Who Is in the Photo?
 
-### Privacy-First Offline Face Recognition using OpenCV YuNet and SFace
+### Privacy-First Local Face Inference using OpenCV YuNet and SFace
 
 [![Python](https://img.shields.io/badge/Python-3.13-blue)](https://www.python.org/)
 [![OpenCV](https://img.shields.io/badge/OpenCV-YuNet%20%7C%20SFace-green)](https://github.com/opencv/opencv_zoo)
 [![Streamlit](https://img.shields.io/badge/UI-Streamlit-red)](https://streamlit.io/)
-[![Processing](https://img.shields.io/badge/Processing-100%25%20Offline-success)]()
+[![Processing](https://img.shields.io/badge/Inference-Local-success)]()
 
-An offline face recognition application that identifies people in group photographs by comparing detected faces against a locally maintained reference database.
+An application that identifies people in group photographs by comparing detected faces against a locally maintained reference database. Face detection, embedding generation and matching use local models; package installation and other setup operations may require network access.
 
 The system uses **OpenCV YuNet** for face detection and **OpenCV SFace** for face feature extraction and recognition.
 
-Photographs and face embeddings are processed locally. No cloud-based face recognition services or online recognition APIs are used.
+Photographs and face embeddings are processed locally during recognition. The application does not call cloud-based face-recognition services or online recognition APIs for this inference workflow.
 
 ---
 
@@ -36,7 +36,9 @@ The application is built using Python, OpenCV and Streamlit, with pretrained ONN
 - Detect faces in each reference image.
 - Require exactly one detectable face per reference photograph.
 - Generate and store face embeddings.
-- Save and load the local embedding database.
+- Build and optionally save the local embedding database.
+
+`ReferenceDatabase.load()` exists in the Python class, but the Streamlit recognition workflow does not automatically load a saved database at startup. Users currently rebuild the reference database from the reference folder when starting a new app session.
 
 ### 2. Group Photograph Recognition
 - Upload a group photograph.
@@ -50,12 +52,10 @@ The application is built using Python, OpenCV and Streamlit, with pretrained ONN
 - Display identity labels and similarity scores.
 - Use different visual indicators for recognized and unknown individuals.
 
-### 4. Privacy-First Offline Processing
-- Local image processing.
-- Local ONNX model inference.
+### 4. Privacy-First Local Inference
+- Face detection, embedding generation and matching use local ONNX models.
 - Local embedding database.
-- No online face recognition APIs.
-- No cloud-based image processing.
+- No cloud-based face-recognition API is called for inference.
 
 ## 🏗️ System Architecture
 
@@ -133,7 +133,7 @@ The threshold is configurable and should be calibrated using representative vali
 | Numerical operations | NumPy |
 | Data handling | Pandas |
 | Image handling | Pillow |
-| Testing | Python unittest / custom validation scripts |
+| Testing | Standalone Python validation scripts and manual checks |
 | Version control | Git and GitHub |
 
 ## 📁 Project Structure
@@ -218,6 +218,8 @@ pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
+Installing Python packages may require network access to download dependencies. Once installed, face detection, embedding generation and matching use the local ONNX model files; this does not guarantee that every setup step or application operation is offline.
+
 ### 4. Verify model files
 
 Ensure the following pretrained ONNX files exist:
@@ -270,9 +272,9 @@ The filename, without the extension, becomes the enrolled identity.
 1. Enter the local reference folder path.
 2. Click **Build Reference Database**.
 3. Review the total images, enrolled identities and skipped images.
-4. Save the generated embedding database.
+4. Optionally save the generated embedding database for local storage.
 
-The application stores the embeddings locally.
+The active embeddings are held in Streamlit session state. The UI does not automatically reload a saved `.npz` database at startup, so rebuild the reference database from the folder when starting a new session.
 
 ### Step 3: Upload a Group Photograph
 
@@ -324,17 +326,17 @@ Each test photograph was different from its corresponding reference photograph.
 |---|---:|
 | Faces detected | 7 |
 | Recognition results generated | 7 |
-| Faces labelled Unknown | 7 |
+| Faces labelled `Unknown` | 7 |
 
-All seven faces were detected and processed successfully in the demonstration group photograph.
+The current seven-face demonstration detected seven faces and labelled all seven `Unknown`. This is an unknown-person rejection test, not a mixed known/unknown recognition demonstration. No successful mixed-person group-photo validation is claimed here.
 
 ### Threshold Experiment
 
-The initial similarity threshold was set to `0.363`.
+The initial and current production similarity threshold is `0.363`.
 
-Additional threshold and confidence-margin experiments were performed to investigate the trade-off between genuine-person recognition and unknown-person rejection.
+The confidence-margin sweep kept the similarity threshold at `0.363`. Alternative cutoff values were also re-scored post-hoc using the saved per-image similarity scores; this was not a new model-inference sweep. For example, re-scoring at `0.44` gives 48/50 known identities correct (96%) and 20/20 unknown identities rejected (100%).
 
-The production matcher retains the initial threshold because the small validation sample did not establish a sufficiently reliable improvement from changing it.
+The production matcher retains `0.363`: the small validation sample did not establish a sufficiently reliable improvement to justify changing it. See [RESEARCH.md](RESEARCH.md) for the margin analysis and the distinction between the confidence-margin sweep and post-hoc threshold re-scoring.
 
 **Evaluation limitation:** These are preliminary results from a small controlled LFW sample. They do not represent guaranteed real-world accuracy or performance on an unseen company dataset.
 
@@ -342,10 +344,10 @@ The production matcher retains the initial threshold because the small validatio
 
 Privacy is a core design consideration.
 
-- Photographs are processed locally.
-- Face embeddings are generated locally.
-- The application does not call online face recognition APIs.
-- Reference embeddings are stored in a local compressed database.
+- Face detection, embedding generation and matching use local ONNX models.
+- The recognition workflow does not call online face-recognition APIs.
+- Installation and dependency downloads may require network access; the local-inference design does not guarantee every operation is offline.
+- Reference embeddings are held in session state and can optionally be saved in a local compressed `.npz` file.
 - Reference photographs and datasets are not included in the GitHub repository.
 
 Users should protect local photographs and embedding databases because face embeddings are sensitive biometric information.
