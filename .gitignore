@@ -1,0 +1,16 @@
+# Python
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# macOS
+.DS_Store
+
+# Local datasets and generated embeddings
+data/
+outputs/
+*.npz
+
+# Environment files
+.env
