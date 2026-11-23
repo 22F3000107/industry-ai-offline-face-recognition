@@ -328,7 +328,21 @@ Each test photograph was different from its corresponding reference photograph.
 | Recognition results generated | 7 |
 | Faces labelled `Unknown` | 7 |
 
-The current seven-face demonstration detected seven faces and labelled all seven `Unknown`. This is an unknown-person rejection test, not a mixed known/unknown recognition demonstration. No successful mixed-person group-photo validation is claimed here.
+The current seven-face demonstration detected seven faces and labelled all seven `Unknown`. This is an unknown-person rejection test, not a mixed known/unknown recognition demonstration. The current seven-face demonstration detected seven faces and labelled all seven `Unknown`. This is an unknown-person rejection test. A separate constructed mixed known/unknown integration test is documented below..
+
+### Mixed Known and Unknown Integration Test
+
+A constructed composite image at `data/group_photos/mixed_constructed_test.jpg` was evaluated against the 50-identity reference database. It contains 10 individual LFW image tiles: five showing enrolled identities and five showing identities absent from the reference database.
+
+| Metric | Result |
+|---|---:|
+| Source image tiles | 10 |
+| Enrolled identities correctly recognized | 5/5 |
+| Faces detected | 11 |
+| Faces labelled `Unknown` | 6 |
+| False identifications | 0 |
+
+The 11th detected face is an additional visible person in the `Amanda_Beard` source photograph, not an obvious false-positive detection. This is a controlled composite integration test assembled from individual LFW images, not a genuine group photograph or an independent accuracy benchmark.
 
 ### Threshold Experiment
 
