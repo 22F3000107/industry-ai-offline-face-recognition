@@ -14,3 +14,17 @@ outputs/
 
 # Environment files
 .env
+
+# Additional virtual environments
+.venv/
+env/
+
+# Environment variables
+.env.*
+!.env.example
+
+# Private keys and certificates
+*.pem
+*.key
+*.p12
+*.pfx

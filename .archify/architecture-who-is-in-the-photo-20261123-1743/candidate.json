@@ -1,0 +1,160 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Who Is in the Photo? — Architecture",
+    "locale": "en",
+    "output": ".archify/architecture-who-is-in-the-photo-20261123-1743/who-is-in-the-photo.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/22F3000107/industry-ai-offline-face-recognition.git",
+      "provider": "github",
+      "revision": "7c3229f404a921bc621edaa5a62d31c632ed5165"
+    }
+  },
+  "layout": { "mode": "auto" },
+  "components": [
+    {
+      "id": "user",
+      "type": "external",
+      "label": "User",
+      "sublabel": "Select references and a group photo",
+      "tag": "INPUT",
+      "pos": [40, 230],
+      "size": [180, 70],
+      "sources": [{ "path": "app.py", "line": 342, "end_line": 353 }]
+    },
+    {
+      "id": "app",
+      "type": "frontend",
+      "label": "Streamlit app",
+      "sublabel": "Threshold control · annotated results",
+      "tag": "USER INTERFACE",
+      "pos": [280, 230],
+      "size": [210, 70],
+      "sources": [
+        { "path": "app.py", "line": 305, "end_line": 317 },
+        { "path": "app.py", "line": 342, "end_line": 400 },
+        { "path": "app.py", "line": 409, "end_line": 451 }
+      ]
+    },
+    {
+      "id": "reference_photos",
+      "type": "database",
+      "label": "Reference photos",
+      "sublabel": "Local folder · filename becomes identity",
+      "tag": "REFERENCE ENROLLMENT",
+      "pos": [40, 70],
+      "size": [220, 70],
+      "sources": [{ "path": "src/database.py", "line": 18, "end_line": 58 }]
+    },
+    {
+      "id": "reference_db",
+      "type": "backend",
+      "label": "ReferenceDatabase",
+      "sublabel": "One detected face per image",
+      "tag": "REFERENCE ENROLLMENT",
+      "pos": [350, 70],
+      "size": [220, 70],
+      "sources": [{ "path": "src/database.py", "line": 10, "end_line": 78 }]
+    },
+    {
+      "id": "detector",
+      "type": "backend",
+      "label": "FaceDetector · YuNet",
+      "sublabel": "Bounding box, confidence and face data",
+      "tag": "SHARED INFERENCE",
+      "pos": [550, 230],
+      "size": [220, 70],
+      "sources": [
+        { "path": "src/face_detector.py", "line": 6, "end_line": 30 },
+        { "path": "src/face_detector.py", "line": 32, "end_line": 73 }
+      ]
+    },
+    {
+      "id": "encoder",
+      "type": "backend",
+      "label": "FaceEncoder · SFace",
+      "sublabel": "Align, crop and normalize NumPy embedding",
+      "tag": "SHARED INFERENCE",
+      "pos": [820, 230],
+      "size": [220, 70],
+      "sources": [{ "path": "src/face_encoder.py", "line": 7, "end_line": 63 }]
+    },
+    {
+      "id": "identities",
+      "type": "database",
+      "label": "In-memory identities",
+      "sublabel": "Streamlit session state: name → embedding",
+      "tag": "SHARED REFERENCE DATA",
+      "pos": [880, 520],
+      "size": [250, 70],
+      "sources": [{ "path": "app.py", "line": 360, "end_line": 368 }]
+    },
+    {
+      "id": "matcher",
+      "type": "backend",
+      "label": "FaceMatcher",
+      "sublabel": "Cosine · below adjustable threshold → Unknown",
+      "tag": "GROUP PHOTO RECOGNITION",
+      "pos": [1090, 230],
+      "size": [240, 70],
+      "sources": [{ "path": "src/face_matcher.py", "line": 5, "end_line": 75 }]
+    },
+    {
+      "id": "embedding_file",
+      "type": "database",
+      "label": "Saved embeddings (optional)",
+      "sublabel": "data/reference_embeddings.npz · names + NumPy arrays",
+      "tag": "OPTIONAL LOCAL SAVE",
+      "pos": [300, 520],
+      "size": [270, 70],
+      "sources": [
+        { "path": "app.py", "line": 393, "end_line": 400 },
+        { "path": "src/database.py", "line": 80, "end_line": 100 }
+      ]
+    },
+    {
+      "id": "models",
+      "type": "database",
+      "label": "Local ONNX model files",
+      "sublabel": "YuNet detection + SFace recognition",
+      "tag": "LOCAL MODEL ASSETS",
+      "pos": [610, 360],
+      "size": [240, 70],
+      "sources": [
+        { "path": "app.py", "line": 26, "end_line": 29 },
+        { "path": "src/face_detector.py", "line": 16, "end_line": 30 },
+        { "path": "src/face_encoder.py", "line": 14, "end_line": 24 }
+      ]
+    }
+  ],
+  "connections": [
+    { "from": "user", "to": "app", "label": "Choose inputs · adjust threshold · run" },
+    { "from": "app", "to": "reference_db", "label": "Build" },
+    { "from": "reference_photos", "to": "reference_db", "label": "Read named photos" },
+    { "from": "reference_db", "to": "detector", "label": "Detect reference faces" },
+    { "from": "detector", "to": "encoder", "label": "Face data" },
+    { "from": "reference_db", "to": "encoder", "label": "Encode one-face result" },
+    { "from": "reference_db", "to": "app", "label": "Map + report" },
+    { "from": "app", "to": "identities", "label": "Store in session" },
+    { "from": "app", "to": "embedding_file", "label": "Save on click" },
+    { "from": "app", "to": "detector", "label": "Group-photo faces" },
+    { "from": "encoder", "to": "matcher", "label": "Query embedding" },
+    { "from": "identities", "to": "matcher", "label": "Reference vectors" },
+    { "from": "matcher", "to": "app", "label": "Identity / Unknown + score", "fromSide": "right", "toSide": "left", "via": [[1370, 265], [1370, 620], [250, 620], [250, 265]], "labelAt": [800, 610] },
+    { "from": "models", "to": "detector", "label": "YuNet model" },
+    { "from": "models", "to": "encoder", "label": "SFace model" }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Local processing",
+      "items": [
+        "The app says photographs and embeddings are processed locally and that no online recognition APIs are used (app.py).",
+        "Detection and recognition models are loaded from local models/*.onnx paths.",
+        "The saved .npz file is an optional write. app.py does not load it during recognition; matching uses identities held in Streamlit session state."
+      ]
+    }
+  ]
+}
