@@ -6,6 +6,30 @@ This project explores **offline face recognition in group photographs**. Given a
 
 The scope described here is the implementation and the validation artifacts present in this repository. Results are preliminary measurements on small, controlled image sets. They should not be interpreted as expected accuracy on arbitrary photographs, a demographic fairness assessment, or a production-ready biometric evaluation.
 
+## Research Inventory and Technology Selection
+
+### FaceNet
+
+[FaceNet](https://openaccess.thecvf.com/content_cvpr_2015/html/Schroff_FaceNet_A_Unified_2015_CVPR_paper.html) learns a compact embedding for each face, with distances in the embedding space representing face similarity. Its training uses triplets of matching and non-matching face patches, with online triplet mining. FaceNet was explored as a face-recognition approach for this project; it was not implemented or benchmarked here.
+
+### DeepFace
+
+[DeepFace](https://github.com/serengil/deepface) is a Python face-recognition framework that wraps multiple recognition models, including FaceNet, SFace, and ArcFace. It provides detection, alignment, normalization, representation, and verification stages as part of its workflows. DeepFace was explored as an alternative framework; it was not integrated or benchmarked in this project.
+
+### Selected approach: YuNet + SFace + OpenCV
+
+The implemented pipeline uses YuNet for face detection and SFace for face alignment and embedding generation through OpenCV. The models are local ONNX files documented in [OpenCV Zoo](https://github.com/opencv/opencv_zoo), including the [YuNet model](https://github.com/opencv/opencv_zoo/tree/main/models/face_detection_yunet) and [SFace model](https://github.com/opencv/opencv_zoo/tree/main/models/face_recognition_sface). This combination was selected because the ONNX models integrate with OpenCV's `FaceDetectorYN` and `FaceRecognizerSF` APIs and support the project's offline-inference requirement. The code loads those model files from local paths and constructs those OpenCV APIs ([`app.py`](app.py#L26-L31), [`src/face_detector.py`](src/face_detector.py#L9-L30), [`src/face_encoder.py`](src/face_encoder.py#L10-L24)). The app describes image and embedding processing as local with no online recognition APIs ([`app.py`](app.py#L292-L295)).
+
+### Comparison and evaluation status
+
+| Technology | Main role | Why it was considered | Project decision | Evaluation status |
+|---|---|---|---|---|
+| FaceNet | Embedding-based face recognition | A research approach that maps faces into a similarity space using triplet-based training ([paper](https://openaccess.thecvf.com/content_cvpr_2015/html/Schroff_FaceNet_A_Unified_2015_CVPR_paper.html)) | Explored as an approach; not implemented | No project benchmark conducted |
+| DeepFace | Python framework for face-recognition pipelines | Offers multiple recognition models and detection/alignment/representation/verification workflows ([project](https://github.com/serengil/deepface)) | Explored as an alternative framework; not integrated | No project benchmark conducted |
+| YuNet + SFace + OpenCV | Face detection, embedding generation, and local inference | ONNX model artifacts integrate with OpenCV APIs and meet the offline-inference requirement ([OpenCV Zoo](https://github.com/opencv/opencv_zoo)) | Selected and implemented | Evaluated in this project on small custom known/unknown validation sets; not compared head-to-head against FaceNet or DeepFace |
+
+No controlled head-to-head accuracy or speed benchmark was conducted between FaceNet, DeepFace, and the implemented YuNet/SFace pipeline. The selection above records implementation fit, not evidence that an unimplemented alternative performed worse.
+
 ## 2. Implemented pipeline and model choices
 
 The application uses Streamlit for its interface and OpenCV for image processing and model inference. It loads two local ONNX files: `models/face_detection_yunet_2023mar.onnx` and `models/face_recognition_sface_2021dec.onnx` ([`app.py`](app.py#L26-L31), [`requirements.txt`](requirements.txt)). The UI says photographs and embeddings are processed locally and that no online recognition APIs are used ([`app.py`](app.py#L292-L295)). The repository describes this as offline processing; this is an implementation property, not a measured accuracy result.
