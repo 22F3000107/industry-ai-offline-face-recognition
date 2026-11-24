@@ -346,11 +346,97 @@ st.write(
     "reference photographs."
 )
 
+def browse_reference_folder():
+    """Open a native folder picker in a separate Python process."""
+
+    import subprocess
+    import sys
+
+    current_path = Path(
+        st.session_state.get(
+            "reference_folder_path",
+            "data/reference_faces",
+        )
+    ).expanduser()
+    initial_dir = current_path if current_path.is_dir() else Path.cwd()
+
+    # Run Tk on the child process's main thread. This avoids creating a Tk
+    # window from Streamlit's script thread, which is especially important
+    # for macOS GUI frameworks.
+    picker_script = """
+import sys
+import tkinter as tk
+from tkinter import filedialog
+
+root = tk.Tk()
+root.withdraw()
+try:
+    root.attributes("-topmost", True)
+except tk.TclError:
+    pass
+root.update_idletasks()
+try:
+    selected_folder = filedialog.askdirectory(
+        parent=root,
+        title="Select reference photo folder",
+        initialdir=sys.argv[1],
+        mustexist=True,
+    )
+    if selected_folder:
+        print(selected_folder)
+finally:
+    root.destroy()
+"""
+
+    st.session_state["reference_folder_picker_error"] = ""
+    st.session_state["reference_folder_picker_message"] = ""
+
+    try:
+        result = subprocess.run(
+            [sys.executable, "-c", picker_script, str(initial_dir)],
+            capture_output=True,
+            text=True,
+            check=False,
+            creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+        )
+
+        if result.returncode != 0:
+            detail = result.stderr.strip()
+            st.session_state["reference_folder_picker_error"] = (
+                detail or "The native folder picker could not be opened."
+            )
+        else:
+            selected_folder = result.stdout.strip()
+            if selected_folder:
+                st.session_state["reference_folder_path"] = selected_folder
+            else:
+                st.session_state["reference_folder_picker_message"] = (
+                    "Folder selection cancelled; the current path is unchanged."
+                )
+    except Exception as error:
+        st.session_state["reference_folder_picker_error"] = str(error)
+
+
+if "reference_folder_path" not in st.session_state:
+    st.session_state["reference_folder_path"] = "data/reference_faces"
+
 reference_folder = st.text_input(
     "Reference folder path",
-    value="data/reference_faces",
     help="Example: data/reference_faces",
+    key="reference_folder_path",
 )
+
+st.button("Browse Folder", on_click=browse_reference_folder)
+st.write("Selected folder:", reference_folder)
+
+if st.session_state.get("reference_folder_picker_error"):
+    st.warning(
+        "Folder picker unavailable: "
+        + st.session_state["reference_folder_picker_error"]
+    )
+
+if st.session_state.get("reference_folder_picker_message"):
+    st.caption(st.session_state["reference_folder_picker_message"])
 
 if st.button("Build Reference Database", type="primary"):
     folder = Path(reference_folder).expanduser()
