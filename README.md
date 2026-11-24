@@ -344,6 +344,12 @@ A constructed composite image at `data/group_photos/mixed_constructed_test.jpg` 
 
 The 11th detected face is an additional visible person in the `Amanda_Beard` source photograph, not an obvious false-positive detection. This is a controlled composite integration test assembled from individual LFW images, not a genuine group photograph or an independent accuracy benchmark.
 
+### Offline Runtime Verification
+
+In a manually performed test on the development Mac, Wi-Fi was disabled before starting Streamlit. The application started without internet, native folder selection worked, and 50 reference images were enrolled with 0 skipped. The constructed mixed test image was uploaded successfully; 11 faces were detected, 5 were recognized and 6 were labelled `Unknown`. The recognition output matched the previous connected test.
+
+This verifies the tested runtime workflow on the development Mac only; it does not establish that startup or operation will work offline in every environment.
+
 ### Threshold Experiment
 
 The initial and current production similarity threshold is `0.363`.
